@@ -75,10 +75,10 @@ Vector vRedCenter = vGreenCenter - vRedOffset;
 Vector vRedMin = vGreenMin - vRedOffset;
 Vector vRedMax = vGreenMax - vRedOffset;
 
-array<CBaseEntity@> greenSpecimen;
-array<CBaseEntity@> yellowSpecimen;
-array<CBaseEntity@> blueSpecimen;
-array<CBaseEntity@> redSpecimen;
+array<EHandle> greenSpecimen;
+array<EHandle> yellowSpecimen;
+array<EHandle> blueSpecimen;
+array<EHandle> redSpecimen;
 
 void PluginInit()
 {
@@ -137,7 +137,7 @@ HookReturnCode ClientSay( SayParameters@ pParams )
 	return HOOK_CONTINUE;
 }
 
-void DoSTSRound(array<CBaseEntity@> &specimenArray, Vector min, Vector max, Vector upgrader, Vector randomizer, array<Vector> &stations)
+void DoSTSRound(array<EHandle> &specimenArray, Vector min, Vector max, Vector upgrader, Vector randomizer, array<Vector> &stations)
 {
 	ReloadSpecimen(specimenArray, min, max);
 	EmptyUpgrader(upgrader, stations[0]);
@@ -148,7 +148,7 @@ void DoSTSRound(array<CBaseEntity@> &specimenArray, Vector min, Vector max, Vect
 	for (uint i = 0; i < specimenArray.length(); i++)
 	{
 		g_Scheduler.SetTimeout(
-			"MoveSpecimenToUpgrader", delayUnit + delayUnit * 2.0f * i, @specimenArray[i], upgrader
+			"MoveSpecimenToUpgrader", delayUnit + delayUnit * 2.0f * i, specimenArray[i], upgrader
 		);
 		g_Scheduler.SetTimeout(
 			"EmptyUpgrader", 2.0f * delayUnit + delayUnit * 2.0f * i, upgrader, stations[0]
@@ -160,38 +160,38 @@ void DoSTSRound(array<CBaseEntity@> &specimenArray, Vector min, Vector max, Vect
 	for (uint i = 0; i < specimenArray.length(); i++)
 	{
 		g_Scheduler.SetTimeout(
-			"MoveSpecimenToRandomizer", 10.0f * delayUnit + delayUnit * 2.0f * i, @specimenArray[i], randomizer
+			"MoveSpecimenToRandomizer", 10.0f * delayUnit + delayUnit * 2.0f * i, specimenArray[i], randomizer
 		);
 		g_Scheduler.SetTimeout(
-			"MoveSpecimenToStation", 11.0f * delayUnit + delayUnit * 2.0f * i, @specimenArray[i], stations[i]
+			"MoveSpecimenToStation", 11.0f * delayUnit + delayUnit * 2.0f * i, specimenArray[i], stations[i]
 		);	
 	}
 
 	g_Scheduler.SetTimeout("ReadyUp", 20.0f * delayUnit, min, max);
 }
 
-void MoveSpecimenToUpgrader(CBaseEntity@ specimen, Vector upgrader) 
+void MoveSpecimenToUpgrader(EHandle specimen, Vector upgrader) 
 {
 	g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "> Move specimen to upgrader\n" );
 
-	specimen.SetOrigin(upgrader);
+	Teleport(specimen.GetEntity(), upgrader);
 }
 
-void MoveSpecimenToRandomizer(CBaseEntity@ specimen, Vector randomizer)
+void MoveSpecimenToRandomizer(EHandle specimen, Vector randomizer)
 {
 	g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "> Move specimen to randomizer\n" );
 
-	specimen.SetOrigin(randomizer);
+	Teleport(specimen.GetEntity(), randomizer);
 }
 
-void MoveSpecimenToStation(CBaseEntity@ specimen, Vector station)
+void MoveSpecimenToStation(EHandle specimen, Vector station)
 {
 	g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "> Move specimen to station\n" );
 
-	specimen.SetOrigin(station);
+	Teleport(specimen.GetEntity(), station);
 }
 
-void ReloadSpecimen(array<CBaseEntity@> &specimenArray, Vector min, Vector max)
+void ReloadSpecimen(array<EHandle> &specimenArray, Vector min, Vector max)
 {
 	g_PlayerFuncs.ClientPrintAll(HUD_PRINTTALK, "> Reload specimen\n" );
 
@@ -237,4 +237,13 @@ void ReadyUp(Vector min, Vector max)
 			nearbyBrushEntities[i].Use(null, null, USE_ON, 0.0f);
 		}
 	}
+}
+
+void Teleport(EHandle specimen, Vector upgrader)
+{
+	Vector vTeleportOffset = Vector(0.0f, 0.0f, 5.0f);
+
+	specimen.GetEntity().SetOrigin(upgrader);
+	specimen.GetEntity().Touch(specimen);
+	specimen.GetEntity().Blocked(specimen);
 }
