@@ -24,7 +24,6 @@ Vector vGreenCenter = Vector(1515.575317f, -286.405975f, 16.010805f);
 Vector vGreenMin = Vector(1100.461670f, -480.567810f, 0.0f);
 Vector vGreenMax = Vector(1900.012451f, -85.968750f, 64.0f);
 
-// TODO: Reset on map load
 array<CBaseEntity@> greenSpecimen;
 
 void PluginInit()
@@ -33,7 +32,6 @@ void PluginInit()
 	g_Module.ScriptInfo.SetContactInfo("liam.swift.wooooooof@gmail.com");
 	
 	g_Hooks.RegisterHook(Hooks::Player::ClientSay, @ClientSay);
-	g_Hooks.RegisterHook(Hooks::Game::MapChange, @OnMapChange);
 }
 
 HookReturnCode ClientSay( SayParameters@ pParams )
@@ -89,6 +87,8 @@ HookReturnCode ClientSay( SayParameters@ pParams )
 					"MoveSpecimenToStation", 11.0f * delayUnit + delayUnit * 2.0f * i, @greenSpecimen[i], vGreenStations[i]
 				);	
 			}
+
+			g_Scheduler.SetTimeout("ReadyUpGreen", 20.0f);
 		}
 	}
 	
@@ -139,7 +139,15 @@ void EmptyUpgrader(Vector upgrader)
 	}
 }
 
-HookReturnCode OnMapChange()
+void ReadyUpGreen()
 {
-	return HOOK_CONTINUE;
+	array<CBaseEntity@> nearbyBrushEntities(24);
+	int r = g_EntityFuncs.BrushEntsInBox(@nearbyBrushEntities, vGreenMin, vGreenMax);
+
+	for (uint i = 0; i < nearbyBrushEntities.length(); i++)
+	{
+		if (nearbyBrushEntities[i] !is null && nearbyBrushEntities[i].GetClassname() == 'func_rot_button') {
+			nearbyBrushEntities[i].Use(null, null, USE_ON, 0.0f);
+		}
+	}
 }
